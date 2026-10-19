@@ -6,7 +6,7 @@ runs/
 *.ckpt
 
 # Datasets (large)
-# data_pipeline/
+data_pipeline/
 datasets/
 *.bin
 *.pcd

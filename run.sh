@@ -340,8 +340,8 @@ echo "===== Train Multimodal YOLO11 (cross_attn fusion) ====="
 # cd into OUT so runs_multimodal/ and CSV logs are created inside /app/output/hurair_cross_attn/
 # Use CODE_DIR (writable /tmp clone) for all Python files — NOT the read-only SCRIPT_DIR
 cd "$OUT"
-python "$CODE_DIR/train.py" --data_root "$OUTPUT_DIR" --epochs 50 --batch_size 4 --img_size 640 --nc 10 --fusion_type cross_attn --workers 4
-
+# python "$CODE_DIR/train.py" --data_root "$OUTPUT_DIR" --epochs 50 --batch_size 4 --img_size 640 --nc 10 --fusion_type cross_attn --workers 4
+python train_ablation.py --ablation A2 --data_root "$OUTPUT_DIR" --epochs 50 --batch_size 4 --nc 10
 
 # python train.py \
 #   --data_root "C:\Users\hurair\Desktop\MultiModel\scene_level_pipeline\temporal_dataset1" \
@@ -369,7 +369,7 @@ cp "$OUTPUT_DIR/scene_split_report.txt" "$OUT/" 2>/dev/null || true
 cp "$OUTPUT_DIR/data.yaml"              "$OUT/" 2>/dev/null || true
 
 # Package only the results (not the large dataset images)
-tar -czf "$OUT/results.tar.gz" \
+tar -czf "$OUT/resultsA2.tar.gz" \
     -C "$OUT" \
     runs_multimodal \
     scene_split_report.txt \
