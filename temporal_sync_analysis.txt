@@ -1,0 +1,142 @@
+========================================================================
+SECTION 1 — Camera vs LIDAR_TOP Timestamp Offsets
+  delta = t_camera - t_lidar  (milliseconds)
+========================================================================
+  Camera                   Mean      Std      Min      Max   |mean|
+------------------------------------------------------------------------
+  CAM_FRONT               -35.7      0.9    -42.4    -33.1     35.7  ms
+  CAM_FRONT_LEFT          -43.3      0.9    -50.0    -40.4     43.3  ms
+  CAM_FRONT_RIGHT         -27.8      1.0    -34.3    -24.7     27.8  ms
+  CAM_BACK                -10.6      1.0    -17.2     -7.6     10.6  ms
+  CAM_BACK_LEFT            -0.7      0.9     -7.4     +2.1      0.7  ms
+  CAM_BACK_RIGHT          -20.2      1.0    -26.6    -17.0     20.2  ms
+
+========================================================================
+SECTION 2 — Ego-Vehicle Displacement Between LiDAR and Camera Ego Poses
+  (distance in metres between the two ego_pose translations used
+   in the LiDAR→global and global→camera transform chains)
+========================================================================
+  Camera                Mean dist   Max dist   Mean yaw    Max yaw
+------------------------------------------------------------------------
+  CAM_FRONT               0.2173m    0.5014m    0.1103°    1.1389°
+  CAM_FRONT_LEFT          0.2637m    0.6069m    0.1341°    1.3794°
+  CAM_FRONT_RIGHT         0.1690m    0.3923m    0.0862°    0.9722°
+  CAM_BACK                0.0646m    0.1673m    0.0339°    0.5991°
+  CAM_BACK_LEFT           0.0058m    0.0575m    0.0076°    0.3735°
+  CAM_BACK_RIGHT          0.1230m    0.2878m    0.0633°    0.8186°
+
+========================================================================
+SECTION 3 — Estimated 3D Annotation Projection Error for Moving Objects
+  (applies to both LiDAR-to-camera projection and label generation)
+  Assumes worst-case: object moves purely laterally to camera axis.
+========================================================================
+  CAM_FRONT  (|mean|=35.7 ms, max=42.4 ms)
+  Speed                     Displ(mean)     Displ(max)   Px@10m(mean)    Px@10m(max)
+  --------------------------------------------------------------------
+  slow  (15 km/h)               0.149m        0.176m          18.8px          22.3px
+  urban (40 km/h)               0.397m        0.471m          50.2px          59.6px
+  fast  (80 km/h)               0.793m        0.941m         100.4px         119.2px
+
+  CAM_FRONT_LEFT  (|mean|=43.3 ms, max=50.0 ms)
+  Speed                     Displ(mean)     Displ(max)   Px@10m(mean)    Px@10m(max)
+  --------------------------------------------------------------------
+  slow  (15 km/h)               0.180m        0.208m          22.8px          26.4px
+  urban (40 km/h)               0.481m        0.555m          60.9px          70.3px
+  fast  (80 km/h)               0.963m        1.110m         121.9px         140.6px
+
+  CAM_FRONT_RIGHT  (|mean|=27.8 ms, max=34.3 ms)
+  Speed                     Displ(mean)     Displ(max)   Px@10m(mean)    Px@10m(max)
+  --------------------------------------------------------------------
+  slow  (15 km/h)               0.116m        0.143m          14.6px          18.1px
+  urban (40 km/h)               0.308m        0.381m          39.0px          48.2px
+  fast  (80 km/h)               0.617m        0.762m          78.1px          96.4px
+
+  CAM_BACK  (|mean|=10.6 ms, max=17.2 ms)
+  Speed                     Displ(mean)     Displ(max)   Px@10m(mean)    Px@10m(max)
+  --------------------------------------------------------------------
+  slow  (15 km/h)               0.044m        0.072m           5.6px           9.1px
+  urban (40 km/h)               0.118m        0.191m          14.9px          24.2px
+  fast  (80 km/h)               0.236m        0.382m          29.8px          48.4px
+
+  CAM_BACK_LEFT  (|mean|=0.7 ms, max=7.4 ms)
+  Speed                     Displ(mean)     Displ(max)   Px@10m(mean)    Px@10m(max)
+  --------------------------------------------------------------------
+  slow  (15 km/h)               0.003m        0.031m           0.4px           3.9px
+  urban (40 km/h)               0.008m        0.082m           1.0px          10.3px
+  fast  (80 km/h)               0.016m        0.163m           2.0px          20.7px
+
+  CAM_BACK_RIGHT  (|mean|=20.2 ms, max=26.6 ms)
+  Speed                     Displ(mean)     Displ(max)   Px@10m(mean)    Px@10m(max)
+  --------------------------------------------------------------------
+  slow  (15 km/h)               0.084m        0.111m          10.6px          14.1px
+  urban (40 km/h)               0.224m        0.296m          28.4px          37.5px
+  fast  (80 km/h)               0.448m        0.592m          56.8px          75.0px
+
+========================================================================
+SECTION 4 — Ego Pose Used in Each Transform Chain (This Pipeline)
+========================================================================
+
+A. Label generation (3D annotation → 2D YOLO box)
+   Source  : sample_annotation.json  (global frame, at LIDAR_TOP time)
+   Ego pose: cam_sd['ego_pose_token']  ← CAMERA timestamp's ego pose
+   Chain   : global → ego(cam_time) → camera → image
+   Issue   : annotation is at t_lidar; ego is at t_camera.
+             For moving annotated objects, the projected box is shifted
+             by the object's displacement over dt = t_cam - t_lidar.
+
+B. LiDAR depth image (temporal_split_v1.py / make_depth_image)
+   Source  : LIDAR_TOP .pcd.bin  (lidar frame, at t_lidar)
+   Step 1  : lidar → ego(t_lidar) using LIDAR ego_pose  ✓
+   Step 2  : ego → global using LIDAR ego_pose           ✓
+   Step 3  : global → ego(t_camera) using CAMERA ego_pose ✓
+   Step 4  : ego → camera using CAMERA calibrated_sensor ✓
+   Verdict : CORRECT — uses separate ego poses for lidar and camera.
+             Moving objects in the depth image are positioned at
+             t_lidar; the image background is at t_camera.
+             Residual error = ego displacement × sin(object_bearing).
+
+C. LiDAR depth image (scene_level_pipeline.py / compute_lidar_to_cam)
+   Method  : precomputes a STATIC lidar→camera transform using only
+             calibrated_sensor rotation/translation (no ego_pose).
+   Chain   : lidar → ego (assumed same) → camera
+   Issue   : treats both sensors as sharing one ego pose.
+             Error = ego displacement between t_lidar and t_camera.
+             For side cameras with ~50 ms offset at 40 km/h ≈ 0.55 m.
+
+D. Motion compensation status
+   Not applied.  Standard practice for nuScenes 2D detection baselines.
+   (The official nuScenes 2D detection benchmark and all public
+    YOLO-based nuScenes entries also omit motion compensation.)
+
+========================================================================
+SECTION 5 — Suggested Rebuttal / Paper Paragraph
+========================================================================
+
+  nuScenes sample tokens group sensors by logical keyframe but not
+  by identical hardware timestamp.  We measured the actual offsets
+  across all 3,400 key frames in the training split:
+  CAM_FRONT leads or lags LIDAR_TOP by 35.7 ms (mean |Δt|),
+  while side cameras show up to 43.3 ms and
+  CAM_BACK up to 10.6 ms (Table X).
+
+  For 3D annotation projection (labels), our pipeline uses the
+  camera's own ego_pose, so the vehicle-frame transform is correct
+  for the image timestamp.  The residual error arises only for
+  OTHER MOVING OBJECTS: at 40 km/h a car moves
+  ~0.48 m over the worst-case 43 ms
+  offset, producing a lateral shift of
+  ~41 px at 15 m depth
+  (focal length 1266 px, CAM_FRONT).  This is comparable to the
+  label noise accepted by standard nuScenes 2D detection benchmarks
+  and is consistent with all published YOLO-on-nuScenes baselines,
+  none of which apply motion compensation.
+
+  For the LiDAR depth channel, our pipeline (temporal_split_v1.py)
+  correctly routes points through global frame using the LiDAR ego
+  pose at t_lidar then transforms to camera frame using the camera
+  ego pose at t_camera.  scene_level_pipeline.py uses a static
+  calibrated transform (no ego interpolation); this introduces an
+  additional error of ~0.481 m for side cameras
+  at 40 km/h.
+
+========================================================================

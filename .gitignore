@@ -1,0 +1,23 @@
+# Training outputs & checkpoints
+runs_multimodal/
+runs/
+*.pt
+*.pth
+*.ckpt
+
+# Datasets (large)
+data_pipeline/
+datasets/
+*.bin
+*.pcd
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs & temp
+*.log
+*.csv
+wandb/
+.ipynb_checkpoints/

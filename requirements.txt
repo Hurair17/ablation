@@ -1,0 +1,24 @@
+# Multimodal YOLO11 — Training Requirements
+#
+# PyTorch: install the CUDA-matching build from https://pytorch.org/get-started/locally/
+# Example for CUDA 12.x:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+#
+# Then install the rest:
+#   pip install -r requirements.txt
+
+# Core deep learning (CUDA version installed separately — see above)
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Ultralytics — PINNED: the loss API changed across versions; code targets 8.3.x
+ultralytics==8.3.227
+
+# Numerical / vision
+numpy>=1.24.0
+opencv-python>=4.8.0
+matplotlib>=3.7.0
+tqdm>=4.65.0
+
+# nuScenes LiDAR projection (used in data_pipeline/)
+pyquaternion>=0.9.9
