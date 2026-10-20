@@ -36,7 +36,7 @@ echo ""
 echo "===== Clone code ====="
 
 TARGET_BRANCH="main"
-REPO_URL="https://github.com/Hurair17/multi_modal_updated.git"
+REPO_URL="https://github.com/Hurair17/ablation.git"
 
 CODE_DIR="/tmp/multimodal_code_${ABLATION_ID}"
 rm -rf "$CODE_DIR"
