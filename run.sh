@@ -384,3 +384,74 @@ echo "Download    : $OUT/results.tar.gz"
 echo "  runs_multimodal/        checkpoints, CSV log"
 echo "  scene_split_report.txt  train/val scene list (for paper)"
 echo "============================================================"
+
+
+
+
+
+# ===========================================================
+# 11. Print environment versions (debug mAP discrepancy)
+# ===========================================================
+echo ""
+echo "============================================================"
+echo "ENVIRONMENT VERSIONS (for reproducibility / mAP debug)"
+echo "============================================================"
+
+echo ""
+echo "--- System ---"
+uname -a || true
+python --version
+pip --version
+
+echo ""
+echo "--- GPU ---"
+nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader || true
+
+echo ""
+echo "--- Python packages ---"
+python - <<'PY'
+import sys
+print(f"Python        : {sys.version}")
+
+def v(pkg):
+    try:
+        import importlib
+        m = importlib.import_module(pkg)
+        return getattr(m, "__version__", "installed (no __version__)")
+    except ImportError:
+        return "NOT INSTALLED"
+
+packages = [
+    ("torch",          "PyTorch       "),
+    ("torchvision",    "torchvision   "),
+    ("ultralytics",    "ultralytics   "),
+    ("numpy",          "numpy         "),
+    ("cv2",            "OpenCV        "),
+    ("PIL",            "Pillow        "),
+    ("tqdm",           "tqdm          "),
+    ("scipy",          "scipy         "),
+    ("sklearn",        "scikit-learn  "),
+    ("pyquaternion",   "pyquaternion  "),
+    ("nuscenes",       "nuscenes-devkit"),
+    ("matplotlib",     "matplotlib    "),
+]
+for mod, label in packages:
+    print(f"{label}: {v(mod)}")
+
+import torch
+print(f"\nPyTorch CUDA build : {torch.version.cuda}")
+print(f"cuDNN version      : {torch.backends.cudnn.version()}")
+print(f"CUDA available     : {torch.cuda.is_available()}")
+if torch.cuda.is_available():
+    print(f"GPU name           : {torch.cuda.get_device_name(0)}")
+    print(f"GPU memory (GB)    : {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f}")
+    print(f"CUDA runtime ver   : {torch.version.cuda}")
+PY
+
+echo ""
+echo "--- pip freeze (full list) ---"
+pip freeze
+
+echo "============================================================"
+echo "END OF VERSION REPORT"
+echo "============================================================"
