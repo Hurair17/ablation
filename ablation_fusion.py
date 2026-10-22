@@ -12,9 +12,11 @@
 # A7  No FFN block                   CrossAttnNoFFN
 # A8  No spatial dropout             CrossAttnNoDropout
 # A9  Simple concatenation           ConcatFusion
+# A10 Input-level early fusion       EarlyFusionYOLO11  (full model subclass)
 
 import torch
 import torch.nn as nn
+import multimodal_yolo11
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -311,3 +313,34 @@ class ConcatFusion(nn.Module):
 
     def forward(self, cam, lidar):
         return self.proj(torch.cat([cam, lidar], dim=1))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# A10: Input-level early fusion
+# Camera and LiDAR images are concatenated channel-wise (6 ch) then projected
+# back to 3 ch via a learned 1×1 conv+BN+SiLU BEFORE the backbone.
+# A single camera backbone processes the merged input; no FPN-level fusion.
+# Answers: is pixel-level early merging sufficient, or is late cross-attention
+# at semantic FPN features necessary?
+# ─────────────────────────────────────────────────────────────────────────────
+class EarlyFusionYOLO11(multimodal_yolo11.MultiModalYOLO11):
+    """
+    A10: Pixel-level early fusion — cat(cam, lidar) → 1×1 proj → single backbone.
+    Overrides forward(); fuse_p3/p4/p5 and backbone_lidar are never called.
+    """
+    def __init__(self, nc, cam_in_ch=3, lidar_in_ch=3, fusion_type="cross_attn"):
+        super().__init__(nc, cam_in_ch, lidar_in_ch, fusion_type="cross_attn")
+        # Learnable early fusion: merge 6-ch input → cam_in_ch (3 ch)
+        self.early_fusion = nn.Sequential(
+            nn.Conv2d(cam_in_ch + lidar_in_ch, cam_in_ch, 1, bias=False),
+            nn.BatchNorm2d(cam_in_ch),
+            nn.SiLU(),
+        )
+
+    def forward(self, x_cam, x_lidar):
+        # 1. Fuse at input pixel level
+        x = self.early_fusion(torch.cat([x_cam, x_lidar], dim=1))
+        # 2. Single camera backbone (backbone_lidar is initialised but unused)
+        p3, p4, p5 = self.backbone_cam(x)
+        # 3. Head directly — no FPN-level fusion needed
+        return self.head(p3, p4, p5)

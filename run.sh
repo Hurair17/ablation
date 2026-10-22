@@ -13,11 +13,16 @@
 #   A4 = P5-only         A5 = NoResidual
 #   A6 = NoBottleneck    A7 = NoFFN
 #   A8 = NoDropout       A9 = ConcatFusion
+#   A10= EarlyFusion
+#Early Fusion 
+# cam (3ch) ─┐
+#            ├─ cat → [6ch] → Conv1×1+BN+SiLU → [3ch] → backbone_cam → (p3, p4, p5) → head
+# lidar (3ch)┘
 # =============================================================
 set -euo pipefail
 
 # ── ONE LINE TO CHANGE PER JOB ───────────────────────────────
-ABLATION_ID="${ABLATION_ID:-A8}"
+ABLATION_ID="${ABLATION_ID:-A9}"
 # ─────────────────────────────────────────────────────────────
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

@@ -22,6 +22,7 @@ from ablation_fusion import (
     CrossAttnUniCam, CrossAttnUniLidar, CameraPassthrough,
     CrossAttnNoResidual, CrossAttnNoBottleneck,
     CrossAttnNoFFN, CrossAttnNoDropout, ConcatFusion,
+    EarlyFusionYOLO11,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -48,6 +49,7 @@ _REGISTRY = {
     "A7": ("NoFFN",            CrossAttnNoFFN,     CrossAttnNoFFN,     CrossAttnNoFFN),
     "A8": ("NoDropout",        CrossAttnNoDropout, CrossAttnNoDropout, CrossAttnNoDropout),
     "A9": ("ConcatFusion",     ConcatFusion,       ConcatFusion,       ConcatFusion),
+    "A10": ("EarlyFusion",    None,               None,               None),  # whole model replaced
 }
 
 
@@ -65,6 +67,12 @@ def build_model_class(ablation_id):
 
     if ablation_id == "A1":
         return multimodal_yolo11.MultiModalYOLO11
+
+    # A10: early fusion overrides forward() — return the full class directly,
+    # no fusion-module replacement needed.
+    if ablation_id == "A10":
+        EarlyFusionYOLO11.__name__ = "MBiCMF_A10_EarlyFusion"
+        return EarlyFusionYOLO11
 
     # A4: P5 stays as CrossAttnFusion2D; only P3/P4 become CameraPassthrough
     if ablation_id == "A4":
@@ -141,7 +149,7 @@ def parse_args():
     )
     p.add_argument("--ablation",   required=True,
                    choices=list(_REGISTRY.keys()) + ["ALL"],
-                   help="Ablation ID (A1–A9) or ALL to run every variant sequentially")
+                   help="Ablation ID (A1–A10) or ALL to run every variant sequentially")
     p.add_argument("--data_root",  required=True,
                    help="Dataset root (same as train.py --data_root)")
     p.add_argument("--epochs",     type=int, default=100)
