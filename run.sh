@@ -22,7 +22,7 @@
 set -euo pipefail
 
 # ── ONE LINE TO CHANGE PER JOB ───────────────────────────────
-ABLATION_ID="${ABLATION_ID:-A10}"
+ABLATION_ID="${ABLATION_ID:-A1}"
 # ─────────────────────────────────────────────────────────────
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
