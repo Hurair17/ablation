@@ -14,6 +14,8 @@
 #   A6 = NoBottleneck    A7 = NoFFN
 #   A8 = NoDropout       A9 = ConcatFusion
 #   A10= EarlyFusion
+# For fusion use one of thefollowing as a ablation id
+# choices=["gated", "cross_attn", "gated_bilinear", "adapt_gated"],
 #Early Fusion 
 # cam (3ch) ─┐
 #            ├─ cat → [6ch] → Conv1×1+BN+SiLU → [3ch] → backbone_cam → (p3, p4, p5) → head
@@ -22,7 +24,7 @@
 set -euo pipefail
 
 # ── ONE LINE TO CHANGE PER JOB ───────────────────────────────
-ABLATION_ID="${ABLATION_ID:-A1}"
+ABLATION_ID="${ABLATION_ID:-gated}"
 # ─────────────────────────────────────────────────────────────
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -201,8 +203,18 @@ fi
 echo ""
 echo "===== Train ablation $ABLATION_ID ====="
 
-python "$CODE_DIR/train_ablation.py" \
-    --ablation   "$ABLATION_ID" \
+# python "$CODE_DIR/train_ablation.py" \
+#     --ablation   "$ABLATION_ID" \
+#     --data_root  "$OUTPUT_DIR" \
+#     --epochs     100 \
+#     --batch_size 4 \
+#     --img_size   640 \
+#     --nc         10 \
+#     --workers    4
+
+
+python "$CODE_DIR/train.py" \
+    --fusion_type   "$ABLATION_ID" \
     --data_root  "$OUTPUT_DIR" \
     --epochs     100 \
     --batch_size 4 \
