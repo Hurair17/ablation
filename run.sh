@@ -24,7 +24,7 @@
 set -euo pipefail
 
 # ── ONE LINE TO CHANGE PER JOB ───────────────────────────────
-ABLATION_ID="${ABLATION_ID:-gated}"
+ABLATION_ID="${ABLATION_ID:-gated_bilinear}"
 # ─────────────────────────────────────────────────────────────
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
