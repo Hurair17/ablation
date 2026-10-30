@@ -69,7 +69,7 @@ def parse_args():
     p.add_argument("--epochs",  type=int, default=50)
     p.add_argument("--batch",   type=int, default=4)
     p.add_argument("--workers", type=int, default=4)
-    p.add_argument("--model", type=int, default="yolo11m.yaml")
+    p.add_argument("--model",   default="yolo11m.yaml")
     p.add_argument("--device",  default="0")
     return p.parse_args()
 
