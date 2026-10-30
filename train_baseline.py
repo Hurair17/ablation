@@ -69,6 +69,7 @@ def parse_args():
     p.add_argument("--epochs",  type=int, default=50)
     p.add_argument("--batch",   type=int, default=4)
     p.add_argument("--workers", type=int, default=4)
+    p.add_argument("--model", type=int, default="yolo11m.yaml")
     p.add_argument("--device",  default="0")
     return p.parse_args()
 
@@ -89,7 +90,7 @@ def main():
 
     # model = YOLO("yolo11m.pt")    # pretrained COCO weights (yolo11m)
     # model = YOLO("yolo11m.yaml")  # random init yolo11m (no pretrained)
-    model = YOLO("yolo11x.yaml")   # random init yolo11x -- matches multimodal backbone capacity
+    model = YOLO(args.model)   # random init yolo11x -- matches multimodal backbone capacity
 
     model.train(
         data=args.data,

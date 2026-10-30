@@ -282,7 +282,7 @@ echo "Running LiDAR-only baseline (YOLOv11m)..."
 python "$CODE_DIR/train_baseline.py" \
     --data   "$OUTPUT_DIR/lidar_only.yaml" \
     --output "$OUT/baseline_lidar" \
-    --model  "yolo11m.yaml" \
+    --model  "yolo11x.yaml" \
     --epochs 100 \
     --batch  4 \
     --workers 4
