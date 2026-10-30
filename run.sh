@@ -269,28 +269,28 @@ nc: $NC
 names: $NAMES
 YAML
 
-# echo "Running camera-only baseline (YOLOv11x)..."
+echo "Running camera-only baseline (YOLOv11x)..."
+python "$CODE_DIR/train_baseline.py" \
+    --data   "$OUTPUT_DIR/camera_only.yaml" \
+    --output "$OUT/baseline_camera" \
+    --model  "yolo11x.yaml" \
+    --epochs 100 \
+    --batch  4 \
+    --workers 4
+# python "$CODE_DIR/train_baseline.py" --data   "$OUTPUT_DIR/lidar_only.yaml"  --output "$OUT/baseline_lidar"  --model  "yolo11m.yaml" --epochs 100  --batch  4  --workers 4
+
+# echo "Running LiDAR-only baseline (YOLOv11m)..."
 # python "$CODE_DIR/train_baseline.py" \
-#     --data   "$OUTPUT_DIR/camera_only.yaml" \
-#     --output "$OUT/baseline_camera" \
+#     --data   "$OUTPUT_DIR/lidar_only.yaml" \
+#     --output "$OUT/baseline_lidar" \
 #     --model  "yolo11x.yaml" \
 #     --epochs 100 \
 #     --batch  4 \
 #     --workers 4
-# python "$CODE_DIR/train_baseline.py" --data   "$OUTPUT_DIR/lidar_only.yaml"  --output "$OUT/baseline_lidar"  --model  "yolo11m.yaml" --epochs 100  --batch  4  --workers 4
-
-echo "Running LiDAR-only baseline (YOLOv11m)..."
-python "$CODE_DIR/train_baseline.py" \
-    --data   "$OUTPUT_DIR/lidar_only.yaml" \
-    --output "$OUT/baseline_lidar" \
-    --model  "yolo11m.yaml" \
-    --epochs 100 \
-    --batch  4 \
-    --workers 4
 
 echo "Baselines done."
-# echo "  Camera: $OUT/baseline_camera/yolo11m_camera_only/"
-echo "  LiDAR:  $OUT/baseline_lidar/yolo11m_camera_only/"
+echo "  Camera: $OUT/baseline_camera/yolo11m_camera_only/"
+# echo "  LiDAR:  $OUT/baseline_lidar/yolo11m_camera_only/"
 
 # ===========================================================
 # 7. Copy results to persistent output
