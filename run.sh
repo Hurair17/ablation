@@ -213,16 +213,83 @@ echo "===== Train ablation $ABLATION_ID ====="
 #     --workers    4
 
 
-python "$CODE_DIR/train.py" \
-    --fusion_type   "$ABLATION_ID" \
-    --data_root  "$OUTPUT_DIR" \
-    --epochs     100 \
-    --batch_size 4 \
-    --img_size   640 \
-    --nc         10 \
-    --workers    4
+# python "$CODE_DIR/train.py" \
+#     --fusion_type   "$ABLATION_ID" \
+#     --data_root  "$OUTPUT_DIR" \
+#     --epochs     100 \
+#     --batch_size 4 \
+#     --img_size   640 \
+#     --nc         10 \
+#     --workers    4
 
-echo "Training done."
+# echo "Training done."
+# ===========================================================
+# BASELINES: Camera-only (YOLOv11x) + LiDAR-only (YOLOv11m)
+# Ultralytics requires labels at train/labels/ but images are
+# in train/camera/ or train/lidar/.  We create symlink-based
+# proxy datasets so ultralytics can find labels automatically.
+# ===========================================================
+echo ""
+echo "===== Baselines ====="
+
+CAM_DS="$OUTPUT_DIR/camera_dataset"
+LID_DS="$OUTPUT_DIR/lidar_dataset"
+
+# Camera proxy dataset
+mkdir -p "$CAM_DS/train" "$CAM_DS/val"
+ln -sfn "$OUTPUT_DIR/train/camera" "$CAM_DS/train/images"
+ln -sfn "$OUTPUT_DIR/val/camera"   "$CAM_DS/val/images"
+ln -sfn "$OUTPUT_DIR/train/labels" "$CAM_DS/train/labels"
+ln -sfn "$OUTPUT_DIR/val/labels"   "$CAM_DS/val/labels"
+
+# LiDAR proxy dataset
+mkdir -p "$LID_DS/train" "$LID_DS/val"
+ln -sfn "$OUTPUT_DIR/train/lidar"  "$LID_DS/train/images"
+ln -sfn "$OUTPUT_DIR/val/lidar"    "$LID_DS/val/images"
+ln -sfn "$OUTPUT_DIR/train/labels" "$LID_DS/train/labels"
+ln -sfn "$OUTPUT_DIR/val/labels"   "$LID_DS/val/labels"
+
+# Write YAML files
+NC=$(python -c "import yaml; d=yaml.safe_load(open('$OUTPUT_DIR/data.yaml')); print(d['nc'])")
+NAMES=$(python -c "import yaml; d=yaml.safe_load(open('$OUTPUT_DIR/data.yaml')); print(d['names'])")
+
+cat > "$OUTPUT_DIR/camera_only.yaml" <<YAML
+path: $CAM_DS
+train: train/images
+val:   val/images
+nc: $NC
+names: $NAMES
+YAML
+
+cat > "$OUTPUT_DIR/lidar_only.yaml" <<YAML
+path: $LID_DS
+train: train/images
+val:   val/images
+nc: $NC
+names: $NAMES
+YAML
+
+# echo "Running camera-only baseline (YOLOv11x)..."
+# python "$CODE_DIR/train_baseline.py" \
+#     --data   "$OUTPUT_DIR/camera_only.yaml" \
+#     --output "$OUT/baseline_camera" \
+#     --model  "yolo11x.yaml" \
+#     --epochs 100 \
+#     --batch  4 \
+#     --workers 4
+
+echo "Running LiDAR-only baseline (YOLOv11m)..."
+python "$CODE_DIR/train_baseline.py" \
+    --data   "$OUTPUT_DIR/lidar_only.yaml" \
+    --output "$OUT/baseline_lidar" \
+    --model  "yolo11m.yaml" \
+    --epochs 100 \
+    --batch  4 \
+    --workers 4
+
+echo "Baselines done."
+# echo "  Camera: $OUT/baseline_camera/yolo11m_camera_only/"
+echo "  LiDAR:  $OUT/baseline_lidar/yolo11m_camera_only/"
 
 # ===========================================================
 # 7. Copy results to persistent output
