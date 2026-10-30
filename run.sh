@@ -273,7 +273,7 @@ echo "Running camera-only baseline (YOLOv11x)..."
 python "$CODE_DIR/train_baseline.py" \
     --data   "$OUTPUT_DIR/camera_only.yaml" \
     --output "$OUT/baseline_camera" \
-    --model  "yolo11x.yaml" \
+    --model  "yolo11m.yaml" \
     --epochs 100 \
     --batch  4 \
     --workers 4
